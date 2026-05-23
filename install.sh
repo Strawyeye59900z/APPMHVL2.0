@@ -23,7 +23,7 @@ step() { echo -e "\n${BOLD}▶ $1${RESET}"; }
 
 step "Atualizando pacotes e instalando dependências"
 apt-get update -q
-apt-get install -y -q docker.io docker-compose-plugin curl nano git
+apt-get install -y -q docker.io docker-compose curl nano git
 systemctl enable --now docker
 log "Docker instalado e iniciado"
 

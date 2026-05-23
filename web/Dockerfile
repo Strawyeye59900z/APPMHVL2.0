@@ -13,15 +13,11 @@ WORKDIR /app/web
 RUN npm run build
 
 FROM node:22-alpine AS runner
-WORKDIR /app
+WORKDIR /app/web
 
 ENV NODE_ENV=production
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/web/.next/standalone ./web
-COPY --from=builder /app/web/.next/static ./web/.next/static
-COPY package.json ./
-
-WORKDIR /app/web
+COPY --from=builder /app/web/.next/standalone .
+COPY --from=builder /app/web/.next/static ./.next/static
 
 EXPOSE 3000
 CMD ["node", "server.js"]

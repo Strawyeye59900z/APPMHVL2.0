@@ -20,10 +20,13 @@ RUN apk add --no-cache chromium
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
-COPY --from=builder /app/api/dist ./dist
-COPY --from=builder /app/api/node_modules ./node_modules
-COPY --from=builder /app/api/prisma ./prisma
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/api/dist ./api/dist
+COPY --from=builder /app/api/prisma ./api/prisma
 COPY --from=builder /app/shared ./shared
+COPY package.json ./
+
+WORKDIR /app/api
 
 EXPOSE 3001
 CMD ["node", "dist/main"]

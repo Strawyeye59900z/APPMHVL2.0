@@ -19,7 +19,6 @@ ENV NODE_ENV=production
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/web/.next/standalone ./web
 COPY --from=builder /app/web/.next/static ./web/.next/static
-COPY --from=builder /app/web/public ./web/public
 COPY package.json ./
 
 WORKDIR /app/web

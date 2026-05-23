@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  GATE
+  RESIDENT
+}
+
+enum FacialStatus {
+  PENDING
+  REGISTERED
+}
+
+enum PackageType {
+  BOX
+  ENVELOPE
+  BAG
+}
+
+enum SpaceType {
+  COURT
+  BBQ
+  HALL
+}
+
+enum ReservationStatus {
+  ACTIVE
+  CANCELLED
+}
+
+model User {
+  id                String    @id @default(uuid())
+  name              String
+  email             String?   @unique
+  gateId            String?   @unique
+  role              UserRole
+  passwordHash      String
+  mustChangePassword Boolean  @default(false)
+  photoUrl          String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  packagesReceived  Package[] @relation("ReceivedBy")
+  announcements     Announcement[]
+  auditLogs         AuditLog[]
+
+  @@map("users")
+}
+
+model Apartment {
+  number            String    @id
+  block             String?
+  defaultPasswordHash String
+  createdAt         DateTime  @default(now())
+
+  residents         Resident[]
+  packages          Package[]
+  reservations      Reservation[]
+
+  @@map("apartments")
+}
+
+model Resident {
+  id                String        @id @default(uuid())
+  apartmentId       String
+  name              String
+  phone             String?
+  photoDriveId      String?
+  photoUrl          String?
+  facialStatus      FacialStatus  @default(PENDING)
+  isOwner           Boolean       @default(false)
+  passwordHash      String?
+  mustChangePassword Boolean      @default(true)
+  active            Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  apartment         Apartment     @relation(fields: [apartmentId], references: [number])
+  packagesPickedUp  Package[]     @relation("PickedUpBy")
+  reservations      Reservation[]
+
+  @@index([facialStatus, createdAt])
+  @@map("residents")
+}
+
+model Package {
+  id                String      @id @default(uuid())
+  apartmentId       String
+  residentId        String?
+  type              PackageType
+  receivedAt        DateTime    @default(now())
+  receivedById      String
+  whatsappSent      Boolean     @default(false)
+  pickedUpAt        DateTime?
+  pickedUpById      String?
+  notes             String?
+
+  apartment         Apartment   @relation(fields: [apartmentId], references: [number])
+  receivedBy        User        @relation("ReceivedBy", fields: [receivedById], references: [id])
+  pickedUpBy        Resident?   @relation("PickedUpBy", fields: [pickedUpById], references: [id])
+
+  @@index([apartmentId, pickedUpAt])
+  @@map("packages")
+}
+
+model Reservation {
+  id                String            @id @default(uuid())
+  spaceType         SpaceType
+  apartmentId       String
+  residentId        String
+  startsAt          DateTime
+  endsAt            DateTime
+  status            ReservationStatus @default(ACTIVE)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  apartment         Apartment         @relation(fields: [apartmentId], references: [number])
+  resident          Resident          @relation(fields: [residentId], references: [id])
+
+  @@index([spaceType, startsAt, endsAt])
+  @@index([apartmentId, startsAt])
+  @@map("reservations")
+}
+
+model Announcement {
+  id              String    @id @default(uuid())
+  title           String
+  body            String
+  publishedAt     DateTime  @default(now())
+  sentToWhatsapp  Boolean   @default(false)
+  whatsappSentAt  DateTime?
+  authorId        String
+
+  author          User      @relation(fields: [authorId], references: [id])
+
+  @@map("announcements")
+}
+
+model AuditLog {
+  id        String    @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  metadata  Json?
+  at        DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId, at])
+  @@map("audit_logs")
+}
